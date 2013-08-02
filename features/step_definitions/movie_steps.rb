@@ -2,19 +2,16 @@
 
 Given /the following movies exist/ do |movies_table|
   movies_table.hashes.each do |movie|
-    # each returned element will be a hash whose key is the table header.
-    # you should arrange to add that movie to the database here.
+    Movie.create(:title => movie[:title], :rating => movie[:rating], :release_date => movie[:release_date])
   end
-  flunk "Unimplemented"
 end
 
 # Make sure that one string (regexp) occurs before or after another one
 #   on the same page
 
 Then /I should see "(.*)" before "(.*)"/ do |e1, e2|
-  #  ensure that that e1 occurs before e2.
-  #  page.body is the entire content of the page as a string.
-  flunk "Unimplemented"
+  match = /#{e1}.*#{e2}/m =~ page.body
+  assert false if match.nil?
 end
 
 # Make it easier to express checking or unchecking several boxes at once
@@ -22,7 +19,22 @@ end
 #  "When I check the following ratings: G"
 
 When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
-  # HINT: use String#split to split up the rating_list, then
-  #   iterate over the ratings and reuse the "When I check..." or
-  #   "When I uncheck..." steps in lines 89-95 of web_steps.rb
+  if uncheck.nil?
+    rating_list.split(", ").each do |rat|
+      step %{I check "ratings_#{rat}"}
+    end
+  else
+     rating_list.split(", ").each do |rat|
+     step %{I uncheck "ratings_#{rat}"}
+    end
+  end
+end
+
+Then /I should see all of the movies/ do
+  rows = Movie.count
+  page.should have_css("table#movies tr", :count=>rows+1)
+end
+
+Then /I should see none of the movies/ do
+  page.should have_css("table#movies tr", :count=>1)
 end
